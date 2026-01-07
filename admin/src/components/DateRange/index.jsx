@@ -1,21 +1,42 @@
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 
-import { DateRange, DateRangePicker, Calendar, DefinedRange } from 'react-date-range';
+import { DateRange } from 'react-date-range';
 import { useIntl } from "react-intl";
-import { addDays } from "date-fns";
-import { enGB } from "date-fns/locale"; // Doğru locale içe aktarıldı mı?
+import { format } from "date-fns";
+import { enGB } from "date-fns/locale";
 import React, { useState, useEffect, forwardRef } from 'react';
 import {
-    Typography,
     Box,
     Field,
     Flex,
     Button,
-    SingleSelect,
-    SingleSelectOption, TextInput
+    TextInput
 } from '@strapi/design-system';
 import { useField } from '@strapi/strapi/admin';
+
+/**
+ * Format date range for display
+ * @param {Object} dates - Object with startDate and endDate
+ * @param {string} locale - Locale for formatting (default: 'en-GB')
+ * @returns {string} Formatted date range string
+ */
+const formatDateRange = (dates) => {
+    if (!dates?.startDate) return '';
+
+    const startDate = new Date(dates.startDate);
+    const endDate = dates.endDate ? new Date(dates.endDate) : null;
+
+    const formatStr = 'dd MMM yyyy';
+    const formattedStart = format(startDate, formatStr, { locale: enGB });
+
+    if (!endDate || dates.startDate === dates.endDate) {
+        return formattedStart;
+    }
+
+    const formattedEnd = format(endDate, formatStr, { locale: enGB });
+    return `${formattedStart} → ${formattedEnd}`;
+};
 const DateRangePicker5 = forwardRef((props, forwardedRef) => {
     const {
         hint,
@@ -58,7 +79,6 @@ const DateRangePicker5 = forwardRef((props, forwardedRef) => {
     const [selectionStep, setSelectionStep] = useState(0); // 👣 Seçim adımlarını takip et
 
     const handleDateChange = (item) => {
-        console.log("item", item);
         setState([item.selection]);
         const { startDate, endDate } = item.selection;
         setSelectedDates({
@@ -112,10 +132,11 @@ const DateRangePicker5 = forwardRef((props, forwardedRef) => {
                     <Box flex="1">
                         <TextInput
                             type="text"
-                            value={JSON.stringify(selectedDates) ?? ''}
+                            value={formatDateRange(selectedDates)}
                             readOnly={true}
                             onClick={() => setShowCalendar((prev) => !prev)}
-                            style={{ width: '100%' }} // TextInput geniş olacak
+                            placeholder="Select a date range..."
+                            style={{ width: '100%', cursor: 'pointer' }}
                         />
                     </Box>
                     <Button variant="secondary" onClick={() => setShowCalendar((prev) => !prev)}
